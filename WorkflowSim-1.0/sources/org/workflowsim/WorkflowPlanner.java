@@ -24,6 +24,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.workflowsim.planning.BasePlanningAlgorithm;
 import org.workflowsim.planning.DHEFTPlanningAlgorithm;
 import org.workflowsim.planning.HEFTPlanningAlgorithm;
+import org.workflowsim.planning.PredictiveHEFTPlanner;
 import org.workflowsim.planning.RandomPlanningAlgorithm;
 import org.workflowsim.utils.Parameters;
 import org.workflowsim.utils.Parameters.PlanningAlgorithm;
@@ -58,7 +59,7 @@ public final class WorkflowPlanner extends SimEntity {
      * Created a new WorkflowPlanner object.
      *
      * @param name name to be associated with this entity (as required by
-     * Sim_entity class from simjava package)
+
      * @throws Exception the exception
      * @pre name != null
      * @post $none
@@ -166,7 +167,7 @@ public final class WorkflowPlanner extends SimEntity {
     }
 
     /**
-     * Switch between multiple planners. Based on planner.method
+
      *
      * @param name the SCHMethod name
      * @return the scheduler that extends BaseScheduler
@@ -174,10 +175,10 @@ public final class WorkflowPlanner extends SimEntity {
     private BasePlanningAlgorithm getPlanningAlgorithm(PlanningAlgorithm name) {
         BasePlanningAlgorithm planner;
 
-        // choose which scheduler to use. Make sure you have add related enum in
+
         //Parameters.java
         switch (name) {
-            //by default it is FCFS_SCH
+
             case INVALID:
                 planner = null;
                 break;
@@ -186,6 +187,9 @@ public final class WorkflowPlanner extends SimEntity {
                 break;
             case HEFT:
                 planner = new HEFTPlanningAlgorithm();
+                break;
+            case PREDICTIVE_HEFT: // ADD THIS CASE BLOCK
+                planner = new PredictiveHEFTPlanner();
                 break;
             case DHEFT:
                 planner = new DHEFTPlanningAlgorithm();
@@ -199,7 +203,7 @@ public final class WorkflowPlanner extends SimEntity {
 
     /**
      * Add impact factor for each task. This is useful in task balanced
-     * clustering algorithm It is for research purpose and thus it is optional.
+
      *
      * @param taskList all the tasks
      */
@@ -236,7 +240,7 @@ public final class WorkflowPlanner extends SimEntity {
 
     /**
      * Overrides this method when making a new and different type of Broker.
-     * This method is called by {@link #body()} for incoming unknown tags.
+
      *
      * @param ev a SimEvent object
      * @pre ev != null
