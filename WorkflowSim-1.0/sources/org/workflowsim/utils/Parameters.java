@@ -17,6 +17,7 @@ package org.workflowsim.utils;
 
 import java.util.List;
 import org.cloudbus.cloudsim.Log;
+import weka.classifiers.Classifier;
 
 /**
  * This class includes most parameters a user can specify in a configuration
@@ -189,6 +190,10 @@ public class Parameters {
      * @param rMethod , reducer mode
      * @param dl, deadline
      */
+
+    private static Classifier predictionModel;
+
+
     public static void init(
             int vm, String dax, String runtime, String datasize,
             OverheadParameters op, ClusteringParameters cp,
@@ -429,4 +434,13 @@ public class Parameters {
     public static List<String> getDAXPaths() {
         return daxPaths;
     }
+
+    public static void setPredictionModel(Classifier model) {
+        predictionModel = model;
+    }
+
+    public static Classifier getPredictionModel() {
+        return predictionModel;
+    }
 }
+

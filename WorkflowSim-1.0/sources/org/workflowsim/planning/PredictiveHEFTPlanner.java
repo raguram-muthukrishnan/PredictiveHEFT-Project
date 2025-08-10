@@ -54,15 +54,27 @@ public class PredictiveHEFTPlanner extends HEFTPlanningAlgorithm {
 
     protected double getComputationCost(Task task, Vm vm) {
 
-// We must ensure the task is a Job object to access parent lists etc.
+        // Add debugging to verify this method is being called
+
+        System.out.println("[PREDICTIVE-HEFT] getComputationCost called for task " + task.getCloudletId() + " on VM " + vm.getId());
+
+
+
+        // We must ensure the task is a Job object to access parent lists etc.
 
         if (task instanceof Job) {
 
-            return WekaPredictor.predictExecutionTime((Job) task, vm);
+            double predictedTime = WekaPredictor.predictExecutionTime((Job) task, vm);
+
+            System.out.println("[PREDICTIVE-HEFT] ML model predicted execution time: " + predictedTime + " for task " + task.getCloudletId());
+
+            return predictedTime;
 
         } else {
 
-// Fallback for non-job tasks, though in WorkflowSim they are typically Jobs.
+            // Fallback for non-job tasks, though in WorkflowSim they are typically Jobs.
+
+            System.out.println("[PREDICTIVE-HEFT] Falling back to standard HEFT for non-Job task " + task.getCloudletId());
 
             return super.getComputationCost(task, vm);
 

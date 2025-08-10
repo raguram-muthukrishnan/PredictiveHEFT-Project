@@ -19,7 +19,7 @@ public class WekaPredictor {
     static {
         try {
             Log.printLine("Initializing WekaPredictor...");
-            String modelPath = "models/predictive_heft_model.model";
+            String modelPath = "predictive_heft_model.model";
             String arffPath = "training_data.arff";
 
             classifier = (Classifier) SerializationHelper.read(new FileInputStream(modelPath));
