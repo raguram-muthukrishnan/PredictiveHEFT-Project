@@ -136,9 +136,11 @@ public final class WorkflowPlanner extends SimEntity {
             case WorkflowSimTags.START_SIMULATION:
                 getWorkflowParser().parse();
                 setTaskList(getWorkflowParser().getTaskList());
+                Log.printLine("WorkflowPlanner: Parsed " + getTaskList().size() + " tasks from DAX.");
                 processPlanning();
                 processImpactFactors(getTaskList());
                 sendNow(getClusteringEngineId(), WorkflowSimTags.JOB_SUBMIT, getTaskList());
+                Log.printLine("WorkflowPlanner: Submitted " + getTaskList().size() + " tasks to clustering engine.");
                 break;
             case CloudSimTags.END_OF_SIMULATION:
                 shutdownEntity();
@@ -159,7 +161,9 @@ public final class WorkflowPlanner extends SimEntity {
         planner.setTaskList(getTaskList());
         planner.setVmList(getWorkflowEngine().getAllVmList());
         try {
+            Log.printLine("HEFT planner running with " + getTaskList().size() + " tasks.");
             planner.run();
+            Log.printLine("Planning completed. Tasks scheduled.");
         } catch (Exception e) {
             Log.printLine("Error in configuring scheduler_method");
             e.printStackTrace();
@@ -172,7 +176,7 @@ public final class WorkflowPlanner extends SimEntity {
      * @param name the SCHMethod name
      * @return the scheduler that extends BaseScheduler
      */
-    private BasePlanningAlgorithm getPlanningAlgorithm(PlanningAlgorithm name) {
+    public BasePlanningAlgorithm getPlanningAlgorithm(PlanningAlgorithm name) {
         BasePlanningAlgorithm planner;
 
 
