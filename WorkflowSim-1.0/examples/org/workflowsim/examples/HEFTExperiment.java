@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class HEFTExperiment {
 
-    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_100.xml";
+    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_25.xml";
     private static final int VM_NUM = 5;
 
     public static void main(String[] args) {
@@ -127,22 +127,82 @@ public class HEFTExperiment {
             return;
         }
 
+        DecimalFormat df = new DecimalFormat("###.##");
+
+        // Basic metrics calculation
         double makespan = 0.0;
         double totalCost = 0.0;
-        DecimalFormat df = new DecimalFormat("###.##");
+        double totalTurnaroundTime = 0.0;
+        double totalWaitingTime = 0.0;
+        double totalCpuTime = 0.0;
 
         for (Job job : finishedJobs) {
             if (job.getFinishTime() > makespan) {
                 makespan = job.getFinishTime();
             }
             totalCost += job.getCostPerSec() * job.getActualCPUTime();
+
+            // Performance & Responsiveness Metrics
+            totalTurnaroundTime += (job.getFinishTime() - job.getSubmissionTime());
+            totalWaitingTime += job.getWaitingTime();
+            totalCpuTime += job.getActualCPUTime();
         }
 
-        Log.printLine("PERFORMANCE METRICS:");
+        // Calculate VM utilization metrics
+        double[] vmUtilizations = new double[VM_NUM];
+        double totalAvailableCpuTime = 0.0;
+
+        // Calculate total available CPU time from all VMs
+        for (int i = 0; i < VM_NUM; i++) {
+            totalAvailableCpuTime += makespan; // Each VM was available for the entire makespan
+        }
+
+        // Calculate individual VM utilizations
+        for (Job job : finishedJobs) {
+            int vmId = job.getVmId();
+            if (vmId >= 0 && vmId < VM_NUM) {
+                vmUtilizations[vmId] += job.getActualCPUTime();
+            }
+        }
+
+        // Convert to utilization percentages and calculate standard deviation
+        double sumUtilization = 0.0;
+        for (int i = 0; i < VM_NUM; i++) {
+            vmUtilizations[i] = (vmUtilizations[i] / makespan) * 100.0; // Convert to percentage
+            sumUtilization += vmUtilizations[i];
+        }
+
+        double meanUtilization = sumUtilization / VM_NUM;
+        double sumSquaredDifferences = 0.0;
+        for (int i = 0; i < VM_NUM; i++) {
+            double difference = vmUtilizations[i] - meanUtilization;
+            sumSquaredDifferences += difference * difference;
+        }
+        double stdDevUtilization = Math.sqrt(sumSquaredDifferences / VM_NUM);
+
+        // Display comprehensive metrics
+        Log.printLine("BASIC PERFORMANCE METRICS:");
         Log.printLine("- Total jobs completed: " + finishedJobs.size());
         Log.printLine("- Makespan: " + df.format(makespan) + " seconds");
         Log.printLine("- Total cost: $" + df.format(totalCost));
-        Log.printLine("- Simulation wall time: " + (simulationTimeNanos / 1_000_000) + " ms");
+
+        Log.printLine("\n1) PERFORMANCE & RESPONSIVENESS METRICS:");
+        Log.printLine("- Average Task Turnaround Time: " + df.format(totalTurnaroundTime / finishedJobs.size()) + " seconds");
+        Log.printLine("- Average Task Waiting Time: " + df.format(totalWaitingTime / finishedJobs.size()) + " seconds");
+
+        Log.printLine("\n2) RESOURCE UTILIZATION METRICS:");
+        Log.printLine("- Overall CPU Utilization: " + df.format((totalCpuTime / totalAvailableCpuTime) * 100.0) + "%");
+        Log.printLine("- Standard Deviation of VM Utilization: " + df.format(stdDevUtilization) + "%");
+
+        // Display individual VM utilizations for debugging
+        Log.printLine("- Individual VM Utilizations:");
+        for (int i = 0; i < VM_NUM; i++) {
+            Log.printLine("  VM " + i + ": " + df.format(vmUtilizations[i]) + "%");
+        }
+
+        Log.printLine("\n3) COST & EFFICIENCY METRICS:");
+        Log.printLine("- Scheduling Overhead (Planning Time): " + (simulationTimeNanos / 1_000_000) + " ms");
+        Log.printLine("- Algorithm Used: Standard HEFT");
 
         Log.printLine("====================================================================");
     }

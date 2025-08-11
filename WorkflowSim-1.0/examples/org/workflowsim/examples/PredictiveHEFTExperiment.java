@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class PredictiveHEFTExperiment {
 
-    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_100.xml";
+    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_25.xml";
     private static final String MODEL_PATH = "models/predictive_heft_model_5.model";
     private static final int VM_NUM = 5;
 
@@ -165,34 +165,128 @@ public class PredictiveHEFTExperiment {
             return;
         }
 
+        DecimalFormat df = new DecimalFormat("###.##");
+
+        // Basic metrics calculation
         double makespan = 0.0;
         double totalCost = 0.0;
-        DecimalFormat df = new DecimalFormat("###.##");
+        double totalTurnaroundTime = 0.0;
+        double totalWaitingTime = 0.0;
+        double totalCpuTime = 0.0;
 
         for (Job job : finishedJobs) {
             if (job.getFinishTime() > makespan) {
                 makespan = job.getFinishTime();
             }
             totalCost += job.getCostPerSec() * job.getActualCPUTime();
+
+            // Performance & Responsiveness Metrics
+            totalTurnaroundTime += (job.getFinishTime() - job.getSubmissionTime());
+            totalWaitingTime += job.getWaitingTime();
+            totalCpuTime += job.getActualCPUTime();
         }
 
-        Log.printLine("PERFORMANCE METRICS:");
+        // Calculate VM utilization metrics
+        double[] vmUtilizations = new double[VM_NUM];
+        double totalAvailableCpuTime = 0.0;
+
+        // Calculate total available CPU time from all VMs
+        for (int i = 0; i < VM_NUM; i++) {
+            totalAvailableCpuTime += makespan; // Each VM was available for the entire makespan
+        }
+
+        // Calculate individual VM utilizations
+        for (Job job : finishedJobs) {
+            int vmId = job.getVmId();
+            if (vmId >= 0 && vmId < VM_NUM) {
+                vmUtilizations[vmId] += job.getActualCPUTime();
+            }
+        }
+
+        // Convert to utilization percentages and calculate standard deviation
+        double sumUtilization = 0.0;
+        for (int i = 0; i < VM_NUM; i++) {
+            vmUtilizations[i] = (vmUtilizations[i] / makespan) * 100.0; // Convert to percentage
+            sumUtilization += vmUtilizations[i];
+        }
+
+        double meanUtilization = sumUtilization / VM_NUM;
+        double sumSquaredDifferences = 0.0;
+        for (int i = 0; i < VM_NUM; i++) {
+            double difference = vmUtilizations[i] - meanUtilization;
+            sumSquaredDifferences += difference * difference;
+        }
+        double stdDevUtilization = Math.sqrt(sumSquaredDifferences / VM_NUM);
+
+        // Display comprehensive metrics
+        Log.printLine("BASIC PERFORMANCE METRICS:");
         Log.printLine("- Total jobs completed: " + finishedJobs.size());
         Log.printLine("- Makespan: " + df.format(makespan) + " seconds");
         Log.printLine("- Total cost: $" + df.format(totalCost));
-        Log.printLine("- Simulation wall time: " + (simulationTimeNanos / 1_000_000) + " ms");
+
+        Log.printLine("\n1) PERFORMANCE & RESPONSIVENESS METRICS:");
+        Log.printLine("- Average Task Turnaround Time: " + df.format(totalTurnaroundTime / finishedJobs.size()) + " seconds");
+        Log.printLine("- Average Task Waiting Time: " + df.format(totalWaitingTime / finishedJobs.size()) + " seconds");
+
+        Log.printLine("\n2) RESOURCE UTILIZATION METRICS:");
+        Log.printLine("- Overall CPU Utilization: " + df.format((totalCpuTime / totalAvailableCpuTime) * 100.0) + "%");
+        Log.printLine("- Standard Deviation of VM Utilization: " + df.format(stdDevUtilization) + "%");
+
+        // Display individual VM utilizations for debugging
+        Log.printLine("- Individual VM Utilizations:");
+        for (int i = 0; i < VM_NUM; i++) {
+            Log.printLine("  VM " + i + ": " + df.format(vmUtilizations[i]) + "%");
+        }
+
+        Log.printLine("\n3) COST & EFFICIENCY METRICS:");
+        Log.printLine("- Scheduling Overhead (Planning Time): " + (simulationTimeNanos / 1_000_000) + " ms");
+        Log.printLine("- Algorithm Used: Predictive HEFT with Load Balancing");
 
         // ML-specific analysis
-        analyzeMachineLearningImpact(finishedJobs);
+        analyzeMachineLearningImpact(finishedJobs, vmUtilizations, stdDevUtilization);
 
         Log.printLine("====================================================================");
     }
 
-    private static void analyzeMachineLearningImpact(List<Job> finishedJobs) {
-        Log.printLine("\nMACHINE LEARNING IMPACT ANALYSIS:");
+    private static void analyzeMachineLearningImpact(List<Job> finishedJobs, double[] vmUtilizations, double stdDevUtilization) {
+        Log.printLine("\n4) MACHINE LEARNING & LOAD BALANCING IMPACT ANALYSIS:");
         Log.printLine("- ML Model: Successfully integrated with Predictive HEFT");
         Log.printLine("- Prediction-based scheduling: " + finishedJobs.size() + " jobs scheduled using ML predictions");
         Log.printLine("- Enhanced decision making: Task execution time predictions used for optimal VM assignment");
+
+        DecimalFormat df = new DecimalFormat("###.##");
+
+        // Load balancing effectiveness analysis
+        Log.printLine("\nLOAD BALANCING EFFECTIVENESS:");
+        if (stdDevUtilization < 5.0) {
+            Log.printLine("✅ EXCELLENT LOAD BALANCING: Very even distribution across VMs (σ = " + df.format(stdDevUtilization) + "%)");
+        } else if (stdDevUtilization < 10.0) {
+            Log.printLine("✅ GOOD LOAD BALANCING: Reasonably even distribution across VMs (σ = " + df.format(stdDevUtilization) + "%)");
+        } else if (stdDevUtilization < 20.0) {
+            Log.printLine("⚠️  MODERATE LOAD BALANCING: Some imbalance detected (σ = " + df.format(stdDevUtilization) + "%)");
+        } else {
+            Log.printLine("❌ POOR LOAD BALANCING: Significant imbalance across VMs (σ = " + df.format(stdDevUtilization) + "%)");
+        }
+
+        // Find min and max utilized VMs
+        double minUtilization = Double.MAX_VALUE;
+        double maxUtilization = 0.0;
+        int minVM = -1, maxVM = -1;
+
+        for (int i = 0; i < vmUtilizations.length; i++) {
+            if (vmUtilizations[i] < minUtilization) {
+                minUtilization = vmUtilizations[i];
+                minVM = i;
+            }
+            if (vmUtilizations[i] > maxUtilization) {
+                maxUtilization = vmUtilizations[i];
+                maxVM = i;
+            }
+        }
+
+        double utilizationRange = maxUtilization - minUtilization;
+        Log.printLine("- Utilization Range: " + df.format(utilizationRange) + "% (VM" + maxVM + ": " +
+                     df.format(maxUtilization) + "% → VM" + minVM + ": " + df.format(minUtilization) + "%)");
 
         // Calculate scheduling efficiency metrics
         double avgExecutionTime = finishedJobs.stream()
@@ -205,19 +299,20 @@ public class PredictiveHEFTExperiment {
                 .average()
                 .orElse(0.0);
 
-        DecimalFormat df = new DecimalFormat("###.##");
-        Log.printLine("- Average execution efficiency: " + df.format(avgExecutionTime) + "s per job");
-        Log.printLine("- Average waiting time efficiency: " + df.format(avgWaitTime) + "s per job");
+        Log.printLine("\nPREDICTIVE SCHEDULING EFFICIENCY:");
+        Log.printLine("- Average execution time per job: " + df.format(avgExecutionTime) + "s");
+        Log.printLine("- Average waiting time per job: " + df.format(avgWaitTime) + "s");
 
-        if (avgWaitTime < avgExecutionTime * 0.1) {
-            Log.printLine("✅ EXCELLENT: Low waiting times indicate effective ML predictions");
-        } else if (avgWaitTime < avgExecutionTime * 0.2) {
-            Log.printLine("✅ GOOD: Reasonable waiting times with ML-enhanced scheduling");
+        double efficiencyRatio = avgWaitTime / avgExecutionTime;
+        if (efficiencyRatio < 0.1) {
+            Log.printLine("✅ EXCELLENT EFFICIENCY: Very low waiting times indicate highly effective ML predictions");
+        } else if (efficiencyRatio < 0.2) {
+            Log.printLine("✅ GOOD EFFICIENCY: Reasonable waiting times with ML-enhanced scheduling");
         } else {
-            Log.printLine("⚠️  IMPROVEMENT NEEDED: Consider retraining ML model for better predictions");
+            Log.printLine("⚠️  EFFICIENCY CONCERN: Consider retraining ML model for better predictions");
         }
 
-        // Resource utilization analysis
+        // Resource distribution analysis
         int[] jobsPerVM = new int[VM_NUM];
         double[] timePerVM = new double[VM_NUM];
 
@@ -229,10 +324,10 @@ public class PredictiveHEFTExperiment {
             }
         }
 
-        Log.printLine("\nRESOURCE UTILIZATION:");
+        Log.printLine("\nJOB DISTRIBUTION ANALYSIS:");
         for (int i = 0; i < VM_NUM; i++) {
             Log.printLine("- VM " + i + ": " + jobsPerVM[i] + " jobs, " +
-                         df.format(timePerVM[i]) + "s total execution");
+                         df.format(timePerVM[i]) + "s total execution time");
         }
     }
 
