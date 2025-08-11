@@ -36,8 +36,8 @@ import java.util.List;
  */
 public class PredictiveHEFTExperiment {
 
-    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_100.xml";
-    private static final String MODEL_PATH = "predictive_heft_model.model";
+    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_25.xml";
+    private static final String MODEL_PATH = "predictive_heft_model_3.model";
     private static final int VM_NUM = 5;
 
     public static void main(String[] args) {
@@ -241,7 +241,7 @@ public class PredictiveHEFTExperiment {
         List<Host> hostList = new ArrayList<>();
         int hostNum = Math.max(VM_NUM * 2, 10);
         int pesPerHost = 4;
-        int mips = 1000;
+        int mips = 2500;
         int ram = 16384;
         long storage = 1_000_000;
         int bw = 10_000;
@@ -262,14 +262,22 @@ public class PredictiveHEFTExperiment {
         List<CondorVM> list = new ArrayList<>();
         long size = 10_000;
         int ram = 2048;
-        int mips = 1000;
         long bw = 1000;
         int pesNumber = 2;
         String vmm = "Xen";
 
+        // Create VMs with varying MIPS ratings
+        int[] mipsRatings = {500, 1000, 1500, 2000, 2500}; // Low, Medium, High power
+
         for (int i = 0; i < vms; i++) {
-            CondorVM vm = new CondorVM(i, userId, mips, pesNumber, ram, bw, size, vmm, new org.cloudbus.cloudsim.CloudletSchedulerSpaceShared());
+            // Cycle through the MIPS ratings for variety
+            int mips = mipsRatings[i % mipsRatings.length];
+            CondorVM vm = new CondorVM(
+                    i, userId, mips, pesNumber, ram, bw, size, vmm,
+                    new org.cloudbus.cloudsim.CloudletSchedulerSpaceShared()
+            );
             list.add(vm);
+            Log.printLine("Created VM #" + i + " with " + mips + " MIPS.");
         }
         return list;
     }

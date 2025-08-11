@@ -301,14 +301,20 @@ public class ArffDataGenerator {
         LinkedList<CondorVM> list = new LinkedList<>();
         long size = 10000;
         int ram = 2048; // Increased RAM per VM
-        int mips = 1000;
         long bw = 1000;
         int pesNumber = 2; // Give each VM 2 processing elements
         String vmm = "Xen";
+
+        // Create VMs with varying MIPS ratings
+        int[] mipsRatings = {500, 1000, 1500, 2000, 2500}; // Low, Medium, High power
+
         for (int i = 0; i < vms; i++) {
+            // Cycle through the MIPS ratings for variety
+            int mips = mipsRatings[i % mipsRatings.length];
             double ratio = 1.0;
             CondorVM vm = new CondorVM(i, userId, mips * ratio, pesNumber, ram, bw, size, vmm, new CloudletSchedulerSpaceShared());
             list.add(vm);
+            Log.printLine("Created VM #" + i + " with " + mips + " MIPS.");
         }
         return list;
     }
