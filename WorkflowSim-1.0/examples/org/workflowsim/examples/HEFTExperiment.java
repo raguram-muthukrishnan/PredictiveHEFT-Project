@@ -33,7 +33,7 @@ import java.util.List;
  */
 public class HEFTExperiment {
 
-    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_25.xml";
+    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_100.xml";
     private static final int VM_NUM = 5;
 
     public static void main(String[] args) {

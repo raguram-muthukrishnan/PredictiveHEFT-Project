@@ -72,7 +72,7 @@ public class ArffDataGenerator {
 
             // Use a DAX file that exists in your system
             // String daxPath = "WorkflowSim-1.0/config/dax/Montage_1000.xml";
-            String daxPath = "WorkflowSim-1.0/config/dax/Montage_1000.xml"; // Try with a smaller workflow first
+            String daxPath = "WorkflowSim-1.0/config/dax/Sipht_1000.xml"; // Try with a smaller workflow first
             File daxFile = new File(daxPath);
             if (!daxFile.exists()) {
                 Log.printLine("!ERROR!: Dax file not found at " + daxFile.getAbsolutePath());
@@ -166,7 +166,7 @@ public class ArffDataGenerator {
      * @param list The list of finished cloudlets.
      */
     private static void generateArffFile(List<Cloudlet> list) {
-        try (FileWriter writer = new FileWriter("training_data.arff")) {
+        try (FileWriter writer = new FileWriter("training_data_with_Sipht.arff")) {
             writer.write("@RELATION task_execution_prediction\n\n");
             writer.write("@ATTRIBUTE task_length NUMERIC\n");
             writer.write("@ATTRIBUTE num_parents NUMERIC\n");

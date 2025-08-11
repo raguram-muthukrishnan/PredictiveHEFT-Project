@@ -36,8 +36,8 @@ import java.util.List;
  */
 public class PredictiveHEFTExperiment {
 
-    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_25.xml";
-    private static final String MODEL_PATH = "predictive_heft_model_3.model";
+    private static final String DAX_PATH = "WorkflowSim-1.0/config/dax/Montage_100.xml";
+    private static final String MODEL_PATH = "models/predictive_heft_model_5.model";
     private static final int VM_NUM = 5;
 
     public static void main(String[] args) {
